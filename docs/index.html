@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>WasteSnap — AI Waste Classifier</title>
+<meta name="description" content="Point your camera at any item to instantly classify it as recyclable, compostable, landfill, or hazardous — with nearby drop-off locations.">
+<meta name="theme-color" content="#064e3b">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♻️</text></svg>">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; }
+  .camera-feed { transform: scaleX(-1); }
+  #result-card { transition: all 0.3s ease; }
+  .cat-recyclable { --accent: #22c55e; }
+  .cat-compostable { --accent: #a3e635; }
+  .cat-landfill { --accent: #6b7280; }
+  .cat-hazardous { --accent: #ef4444; }
+  .cat-e-waste { --accent: #f59e0b; }
+  .cat-unknown { --accent: #8b5cf6; }
+  .pulse-ring {
+    animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(0.9); opacity: 1; }
+    80%, 100% { transform: scale(1.3); opacity: 0; }
+  }
+  .scanning { animation: scan-pulse 1s ease-in-out infinite alternate; }
+  @keyframes scan-pulse { from { opacity: 0.6; } to { opacity: 1; } }
+</style>
+</head>
+<body class="bg-emerald-950 text-white min-h-screen flex flex-col">
+
+<!-- API Key Modal -->
+<div id="key-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+  <div class="bg-emerald-900 rounded-2xl p-6 max-w-md w-full space-y-4">
+    <h2 class="text-xl font-bold">🔑 Setup</h2>
+    <p class="text-emerald-200 text-sm">Enter your <a href="https://console.groq.com/keys" target="_blank" class="underline text-emerald-400">Groq API key</a> to enable waste classification. Free tier works.</p>
+    <input id="key-input" type="password" placeholder="gsk_..." class="w-full px-4 py-3 rounded-xl bg-emerald-950 border border-emerald-700 text-white placeholder-emerald-600 focus:outline-none focus:border-emerald-400">
+    <button id="btn-save-key" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-semibold transition-colors">Save & Start</button>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="px-4 py-3 flex items-center justify-between bg-emerald-900/80 backdrop-blur-sm sticky top-0 z-40">
+  <div class="flex items-center gap-2">
+    <span class="text-2xl">♻️</span>
+    <h1 class="text-lg font-bold tracking-tight">WasteSnap</h1>
+  </div>
+  <div class="flex items-center gap-2">
+    <button id="btn-key" class="text-emerald-300 hover:text-white transition-colors text-sm" aria-label="API Key">🔑</button>
+    <button id="btn-info" class="text-emerald-300 hover:text-white transition-colors" aria-label="Info">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- Camera / Upload Area -->
+<main class="flex-1 flex flex-col items-center justify-center p-4 gap-4">
+
+  <div id="camera-container" class="relative w-full max-w-md aspect-[3/4] rounded-2xl overflow-hidden bg-black shadow-2xl">
+    <video id="camera" class="camera-feed w-full h-full object-cover" autoplay playsinline muted></video>
+    <canvas id="canvas" class="hidden"></canvas>
+    <div id="scan-overlay" class="hidden absolute inset-0 bg-emerald-500/10 border-4 border-emerald-400 rounded-2xl scanning">
+      <div class="absolute inset-0 flex items-center justify-center">
+        <div class="text-center">
+          <div class="w-16 h-16 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p class="mt-3 text-emerald-300 font-medium">Analyzing...</p>
+        </div>
+      </div>
+    </div>
+    <div id="placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-emerald-950/90">
+      <svg class="w-20 h-20 text-emerald-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      <p class="text-emerald-500 text-sm">Tap below to start camera or upload</p>
+    </div>
+  </div>
+
+  <div class="flex gap-3 w-full max-w-md">
+    <button id="btn-camera" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Camera
+    </button>
+    <button id="btn-upload" class="flex-1 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 font-semibold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Upload
+    </button>
+    <button id="btn-snap" class="hidden bg-white text-emerald-900 font-bold py-3 px-6 rounded-xl transition-all hover:scale-105 flex items-center justify-center gap-2 shadow-lg">
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+      Snap
+    </button>
+  </div>
+  <input type="file" id="file-input" accept="image/*" class="hidden">
+
+  <!-- Result Card -->
+  <div id="result-card" class="hidden w-full max-w-md rounded-2xl overflow-hidden shadow-2xl">
+    <div id="result-header" class="p-4 flex items-center gap-3">
+      <div class="relative">
+        <span id="result-emoji" class="text-4xl"></span>
+        <div class="absolute inset-0 rounded-full pulse-ring" style="border: 2px solid var(--accent);"></div>
+      </div>
+      <div>
+        <h2 id="result-item" class="text-xl font-bold"></h2>
+        <p id="result-category" class="text-sm font-medium uppercase tracking-wider opacity-80"></p>
+      </div>
+      <div class="ml-auto text-right">
+        <span id="result-confidence" class="text-2xl font-bold"></span>
+        <p class="text-xs opacity-60">confidence</p>
+      </div>
+    </div>
+    <div class="bg-black/20 p-4 space-y-3">
+      <div>
+        <p class="text-xs uppercase tracking-wider opacity-60 mb-1">Material</p>
+        <p id="result-material" class="font-medium"></p>
+      </div>
+      <div>
+        <p class="text-xs uppercase tracking-wider opacity-60 mb-1">How to Dispose</p>
+        <p id="result-instructions" class="font-medium"></p>
+      </div>
+      <div id="nearby-section" class="hidden">
+        <p class="text-xs uppercase tracking-wider opacity-60 mb-2">Nearby Drop-off Points</p>
+        <ul id="nearby-list" class="space-y-2"></ul>
+      </div>
+    </div>
+    <button id="btn-again" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 font-semibold transition-colors">
+      Scan Another Item
+    </button>
+  </div>
+
+  <div id="error-card" class="hidden w-full max-w-md bg-red-900/50 border border-red-500/30 rounded-xl p-4 text-center">
+    <p id="error-msg" class="text-red-300"></p>
+  </div>
+</main>
+
+<!-- Info Modal -->
+<div id="info-modal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+  <div class="bg-emerald-900 rounded-2xl p-6 max-w-md w-full space-y-4">
+    <h2 class="text-xl font-bold">About WasteSnap</h2>
+    <p class="text-emerald-200 text-sm leading-relaxed">
+      WasteSnap uses AI vision to classify waste items instantly. Point your camera at any object and get:
+    </p>
+    <ul class="text-emerald-200 text-sm space-y-1 list-disc list-inside">
+      <li>Category: recyclable, compostable, landfill, hazardous, or e-waste</li>
+      <li>Material identification</li>
+      <li>Disposal instructions</li>
+      <li>Nearby recycling/drop-off points (with location permission)</li>
+    </ul>
+    <p class="text-emerald-400 text-xs">Built for Arbiter Hacks V1 — Rethinking Waste track</p>
+    <button id="btn-close-info" class="w-full py-2 bg-emerald-700 hover:bg-emerald-600 rounded-xl font-medium transition-colors">Close</button>
+  </div>
+</div>
+
+<script>
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL = 'qwen/qwen3.8-27b';
+const CLASSIFY_PROMPT = `You are a waste classification expert. Look at this image and respond ONLY with valid JSON, no markdown fences:
+{
+  "item": "<what the item is>",
+  "category": "<one of: recyclable, compostable, landfill, hazardous, e-waste>",
+  "material": "<primary material, e.g. PET plastic, glass, organic>",
+  "instructions": "<one sentence: how to properly dispose of this item>",
+  "confidence": <0.0 to 1.0>
+}
+If the image is unclear or not a waste item, set category to "unknown" and confidence to 0.0.`;
+
+const $ = (s) => document.querySelector(s);
+const video = $('#camera');
+const canvas = $('#canvas');
+const ctx = canvas.getContext('2d');
+let stream = null;
+let userLat = null, userLon = null;
+
+// API key management
+function getKey() { return localStorage.getItem('wastesnap_groq_key') || ''; }
+function setKey(k) { localStorage.setItem('wastesnap_groq_key', k); }
+
+// Show key modal if no key
+if (!getKey()) $('#key-modal').classList.remove('hidden');
+$('#btn-save-key').addEventListener('click', () => {
+  const k = $('#key-input').value.trim();
+  if (k) { setKey(k); $('#key-modal').classList.add('hidden'); }
+});
+$('#btn-key').addEventListener('click', () => {
+  $('#key-input').value = getKey();
+  $('#key-modal').classList.remove('hidden');
+});
+
+// Location
+navigator.geolocation?.getCurrentPosition(
+  (pos) => { userLat = pos.coords.latitude; userLon = pos.coords.longitude; },
+  () => {},
+  { enableHighAccuracy: false, timeout: 5000 }
+);
+
+// Camera
+$('#btn-camera').addEventListener('click', async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 960 } }
+    });
+    video.srcObject = stream;
+    $('#placeholder').classList.add('hidden');
+    $('#btn-snap').classList.remove('hidden');
+    $('#btn-snap').classList.add('flex');
+    $('#btn-camera').classList.add('hidden');
+  } catch (e) {
+    showError('Camera access denied. Try uploading an image instead.');
+  }
+});
+
+$('#btn-upload').addEventListener('click', () => $('#file-input').click());
+$('#file-input').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) classifyFile(file);
+});
+
+$('#btn-snap').addEventListener('click', () => {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0);
+  canvas.toBlob((blob) => classifyFile(blob), 'image/jpeg', 0.85);
+});
+
+async function fileToBase64(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function classifyFile(imageBlob) {
+  const key = getKey();
+  if (!key) { $('#key-modal').classList.remove('hidden'); return; }
+
+  $('#scan-overlay').classList.remove('hidden');
+  $('#result-card').classList.add('hidden');
+  $('#error-card').classList.add('hidden');
+
+  try {
+    const b64 = await fileToBase64(imageBlob);
+    const mime = imageBlob.type || 'image/jpeg';
+
+    // Call Groq directly
+    const resp = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${key}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: CLASSIFY_PROMPT },
+            { type: 'image_url', image_url: { url: `data:${mime};base64,${b64}` } },
+          ],
+        }],
+        temperature: 0.1,
+        max_tokens: 300,
+      }),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.text();
+      throw new Error(`Groq API error ${resp.status}: ${err}`);
+    }
+
+    const data = await resp.json();
+    let raw = data.choices[0].message.content;
+    // Strip thinking tags if present (Qwen sometimes wraps in <think>)
+    raw = raw.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    if (raw.startsWith('```')) raw = raw.split('\n').slice(1).join('\n').replace(/```\s*$/, '');
+    const classification = JSON.parse(raw);
+
+    // Find nearby facilities
+    let nearby = null;
+    if (userLat !== null && userLon !== null) {
+      nearby = await findNearby(userLat, userLon, classification.category);
+    }
+
+    showResult({ classification, nearby });
+  } catch (e) {
+    showError(e.message || 'Classification failed.');
+  } finally {
+    $('#scan-overlay').classList.add('hidden');
+  }
+}
+
+async function findNearby(lat, lon, category) {
+  const filters = {
+    recyclable: `node["amenity"="recycling"](around:5000,${lat},${lon});`,
+    hazardous: `node["recycling_type"="centre"](around:5000,${lat},${lon});`,
+    'e-waste': `node["recycling:small_appliances"="yes"](around:5000,${lat},${lon});`,
+    compostable: `node["amenity"="recycling"]["recycling:green_waste"="yes"](around:5000,${lat},${lon});`,
+  };
+  const q = filters[category] || `node["amenity"="recycling"](around:5000,${lat},${lon});`;
+  const query = `[out:json][timeout:10];(${q});out body 5;`;
+
+  try {
+    const resp = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: 'data=' + encodeURIComponent(query),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    return (data.elements || []).slice(0, 5).map(el => ({
+      name: el.tags?.name || 'Recycling Point',
+      lat: el.lat, lon: el.lon,
+      distance_m: haversine(lat, lon, el.lat, el.lon),
+      type: el.tags?.amenity || 'unknown',
+    })).sort((a, b) => a.distance_m - b.distance_m);
+  } catch { return []; }
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371000, toRad = Math.PI / 180;
+  const dp = (lat2 - lat1) * toRad, dl = (lon2 - lon1) * toRad;
+  const a = Math.sin(dp/2)**2 + Math.cos(lat1*toRad) * Math.cos(lat2*toRad) * Math.sin(dl/2)**2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+const CATEGORY_CONFIG = {
+  recyclable:  { emoji: '♻️', bg: 'bg-green-800', text: 'text-green-100' },
+  compostable: { emoji: '🌱', bg: 'bg-lime-800', text: 'text-lime-100' },
+  landfill:    { emoji: '🚮', bg: 'bg-gray-700', text: 'text-gray-100' },
+  hazardous:   { emoji: '☣️', bg: 'bg-red-800', text: 'text-red-100' },
+  'e-waste':   { emoji: '🔌', bg: 'bg-amber-800', text: 'text-amber-100' },
+  unknown:     { emoji: '❓', bg: 'bg-purple-800', text: 'text-purple-100' },
+};
+
+function showResult(data) {
+  const c = data.classification;
+  const cfg = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.unknown;
+  const card = $('#result-card');
+
+  card.className = `w-full max-w-md rounded-2xl overflow-hidden shadow-2xl cat-${c.category}`;
+  $('#result-header').className = `p-4 flex items-center gap-3 ${cfg.bg} ${cfg.text}`;
+  $('#result-emoji').textContent = cfg.emoji;
+  $('#result-item').textContent = c.item;
+  $('#result-category').textContent = c.category;
+  $('#result-material').textContent = c.material;
+  $('#result-instructions').textContent = c.instructions;
+  $('#result-confidence').textContent = Math.round(c.confidence * 100) + '%';
+
+  const nearbySection = $('#nearby-section');
+  const nearbyList = $('#nearby-list');
+  nearbyList.innerHTML = '';
+  if (data.nearby && data.nearby.length > 0) {
+    nearbySection.classList.remove('hidden');
+    data.nearby.forEach((loc) => {
+      const li = document.createElement('li');
+      li.className = 'flex items-center gap-2 bg-black/20 rounded-lg p-2';
+      const dist = loc.distance_m < 1000 ? `${loc.distance_m}m` : `${(loc.distance_m / 1000).toFixed(1)}km`;
+      li.innerHTML = `
+        <span class="text-lg">📍</span>
+        <div class="flex-1 min-w-0">
+          <p class="font-medium text-sm truncate">${loc.name}</p>
+          <p class="text-xs opacity-60">${dist} away</p>
+        </div>
+        <a href="https://www.openstreetmap.org/?mlat=${loc.lat}&mlon=${loc.lon}#map=17/${loc.lat}/${loc.lon}"
+           target="_blank" class="text-xs underline opacity-70 hover:opacity-100 shrink-0">Map</a>
+      `;
+      nearbyList.appendChild(li);
+    });
+  } else {
+    nearbySection.classList.add('hidden');
+  }
+  card.classList.remove('hidden');
+}
+
+function showError(msg) {
+  $('#error-msg').textContent = msg;
+  $('#error-card').classList.remove('hidden');
+}
+
+$('#btn-again').addEventListener('click', () => {
+  $('#result-card').classList.add('hidden');
+  $('#file-input').value = '';
+});
+
+$('#btn-info').addEventListener('click', () => $('#info-modal').classList.remove('hidden'));
+$('#btn-close-info').addEventListener('click', () => $('#info-modal').classList.add('hidden'));
+$('#info-modal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) $('#info-modal').classList.add('hidden');
+});
+</script>
+</body>
+</html>
