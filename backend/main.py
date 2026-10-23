@@ -11,7 +11,7 @@ app = FastAPI(title="WasteSnap API")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
-GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"  # free vision model on Groq
+GROQ_MODEL = "qwen/qwen3.8-27b"  # free vision model on Groq
 
 CLASSIFY_PROMPT = """You are a waste classification expert. Look at this image and respond ONLY with valid JSON, no markdown fences:
 {
