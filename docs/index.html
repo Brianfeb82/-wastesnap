@@ -7,7 +7,7 @@
 <meta name="description" content="Point your camera at any item to instantly classify it as recyclable, compostable, landfill, or hazardous — with nearby drop-off locations.">
 <meta name="theme-color" content="#0a0a0a">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♻️</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23141414'/><circle cx='50' cy='50' r='18' fill='%2322c55e'/></svg>">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -157,7 +157,7 @@
 <!-- API Key Modal -->
 <div id="key-modal" class="modal-bg">
   <div class="modal">
-    <h2>♻️ Setup</h2>
+    <h2>Setup</h2>
     <p>Enter your <a href="https://console.groq.com/keys" target="_blank" style="color:var(--green)">Groq API key</a> to enable AI classification. Free tier works.</p>
     <input id="key-input" type="password" placeholder="gsk_...">
     <button id="btn-save-key" class="btn btn-primary" style="width:100%">Save & Start</button>
@@ -183,12 +183,13 @@
 <!-- Header -->
 <header>
   <div class="logo">
-    <span>♻️</span>
     <h1>WasteSnap</h1>
   </div>
   <div class="header-actions">
     <button id="btn-lang" class="icon-btn lang-btn" aria-label="Language">EN</button>
-    <button id="btn-key" class="icon-btn" aria-label="API Key">🔑</button>
+    <button id="btn-key" class="icon-btn" aria-label="API Key">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a4 4 0 11-8 0 4 4 0 018 0zM11 11v8m0 0h3m-3-3h2"/></svg>
+    </button>
     <button id="btn-info" class="icon-btn" aria-label="Info">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
     </button>
@@ -197,9 +198,9 @@
 
 <!-- Tab Navigation -->
 <nav class="tab-nav">
-  <button class="tab-btn active" data-tab="scan">♻️ Scan</button>
-  <button class="tab-btn" data-tab="stats">📊 Stats</button>
-  <button class="tab-btn" data-tab="history">📋 History</button>
+  <button class="tab-btn active" data-tab="scan">Scan</button>
+  <button class="tab-btn" data-tab="stats">Stats</button>
+  <button class="tab-btn" data-tab="history">History</button>
 </nav>
 
 <!-- TAB: Scan -->
@@ -225,7 +226,7 @@
       Camera
     </button>
     <button id="btn-upload" class="btn btn-secondary">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
       Upload
     </button>
     <button id="btn-snap" class="btn btn-snap">
@@ -237,7 +238,6 @@
 
   <div id="result-card" class="result">
     <div id="result-head" class="result-head">
-      <span class="result-icon">♻️</span>
       <div>
         <div id="result-item" class="result-title"></div>
         <div id="result-category" class="result-cat"></div>
@@ -262,8 +262,8 @@
       </div>
     </div>
     <div class="result-actions">
-      <button id="btn-again">♻️ Scan Again</button>
-      <button id="btn-share">📤 Share Result</button>
+      <button id="btn-again">Scan Again</button>
+      <button id="btn-share">Share Result</button>
     </div>
   </div>
 
@@ -282,8 +282,8 @@
 <!-- TAB: History -->
 <div class="tab-content" data-tab="history">
   <div class="history-actions">
-    <button id="btn-export" class="btn btn-secondary" style="font-size:12px;padding:8px 14px;">📤 Export CSV</button>
-    <button id="btn-clear-history" class="btn btn-secondary" style="font-size:12px;padding:8px 14px;margin-left:auto;">🗑 Clear All</button>
+    <button id="btn-export" class="btn btn-secondary" style="font-size:12px;padding:8px 14px;">Export CSV</button>
+    <button id="btn-clear-history" class="btn btn-secondary" style="font-size:12px;padding:8px 14px;margin-left:auto;">Clear All</button>
   </div>
   <div id="history-container" class="history-list">
     <!-- Filled by JS -->
@@ -297,7 +297,7 @@
 // ─── i18n ───
 const STRINGS = {
   en: {
-    setup: '♻️ Setup',
+    setup: 'Setup',
     enterKey: 'Enter your <a href="https://console.groq.com/keys" target="_blank" style="color:var(--green)">Groq API key</a> to enable AI classification. Free tier works.',
     saveStart: 'Save & Start',
     aboutTitle: 'About WasteSnap',
@@ -305,28 +305,28 @@ const STRINGS = {
     aboutItems: ['Instant category: recyclable, compostable, landfill, hazardous, e-waste', 'Material identification & disposal instructions', 'Nearby drop-off points (with location permission)', 'Scan history & waste footprint stats'],
     aboutFooter: 'Built for Arbiter Hacks V1 — Rethinking Waste',
     close: 'Close',
-    tabScan: '♻️ Scan', tabStats: '📊 Stats', tabHistory: '📋 History',
+    tabScan: 'Scan', tabStats: 'Stats', tabHistory: 'History',
     analyzing: 'Analyzing...',
     placeholderText: 'Tap below to start camera or upload a photo',
     camera: 'Camera', upload: 'Upload', snap: 'Snap',
     confidence: 'confidence',
     material: 'Material', howDispose: 'How to Dispose', nearbyPoints: 'Nearby Drop-off Points',
-    scanAgain: '♻️ Scan Again', shareResult: '📤 Share Result',
-    exportCsv: '📤 Export CSV', clearAll: '🗑 Clear All',
+    scanAgain: 'Scan Again', shareResult: 'Share Result',
+    exportCsv: 'Export CSV', clearAll: 'Clear All',
     totalScans: 'Total Scans', diverted: 'Diverted from Landfill',
     recyclableCompostable: 'Recyclable / Compostable', dayStreak: 'Day Streak',
     wasteBreakdown: 'Waste Breakdown',
-    noScansStats: 'No scans yet. Start scanning to see your waste footprint!',
+    noScansStats: 'No scans yet. Start scanning to see your waste footprint.',
     noScansHistory: 'No scans yet. Your history will appear here.',
-    noData: 'No data to export', csvExported: 'CSV exported!',
+    noData: 'No data to export', csvExported: 'CSV exported',
     historyClear: 'Clear all scan history?', historyCleared: 'History cleared',
-    imageSaved: 'Image saved!',
+    imageSaved: 'Image saved',
     cameraError: 'Camera access denied. Try uploading instead.',
     justNow: 'just now', mAgo: 'm ago', hAgo: 'h ago', dAgo: 'd ago',
     away: 'away',
   },
   id: {
-    setup: '♻️ Pengaturan',
+    setup: 'Pengaturan',
     enterKey: 'Masukkan <a href="https://console.groq.com/keys" target="_blank" style="color:var(--green)">API key Groq</a> untuk mengaktifkan klasifikasi AI. Tier gratis bisa dipakai.',
     saveStart: 'Simpan & Mulai',
     aboutTitle: 'Tentang WasteSnap',
@@ -334,22 +334,22 @@ const STRINGS = {
     aboutItems: ['Kategori instan: daur ulang, kompos, TPA, berbahaya, limbah elektronik', 'Identifikasi material & instruksi pembuangan', 'Titik pembuangan terdekat (dengan izin lokasi)', 'Riwayat scan & statistik jejak sampah'],
     aboutFooter: 'Dibuat untuk Arbiter Hacks V1 — Rethinking Waste',
     close: 'Tutup',
-    tabScan: '♻️ Pindai', tabStats: '📊 Statistik', tabHistory: '📋 Riwayat',
+    tabScan: 'Pindai', tabStats: 'Statistik', tabHistory: 'Riwayat',
     analyzing: 'Menganalisis...',
     placeholderText: 'Ketuk di bawah untuk mulai kamera atau unggah foto',
     camera: 'Kamera', upload: 'Unggah', snap: 'Ambil',
     confidence: 'keyakinan',
     material: 'Material', howDispose: 'Cara Membuang', nearbyPoints: 'Titik Pembuangan Terdekat',
-    scanAgain: '♻️ Pindai Lagi', shareResult: '📤 Bagikan Hasil',
-    exportCsv: '📤 Ekspor CSV', clearAll: '🗑 Hapus Semua',
+    scanAgain: 'Pindai Lagi', shareResult: 'Bagikan Hasil',
+    exportCsv: 'Ekspor CSV', clearAll: 'Hapus Semua',
     totalScans: 'Total Pindai', diverted: 'Dialihkan dari TPA',
     recyclableCompostable: 'Daur Ulang / Kompos', dayStreak: 'Hari Berturut',
     wasteBreakdown: 'Rincian Sampah',
-    noScansStats: 'Belum ada pindaian. Mulai pindai untuk lihat jejak sampahmu!',
+    noScansStats: 'Belum ada pindaian. Mulai pindai untuk lihat jejak sampahmu.',
     noScansHistory: 'Belum ada pindaian. Riwayat akan muncul di sini.',
-    noData: 'Tidak ada data untuk diekspor', csvExported: 'CSV diekspor!',
+    noData: 'Tidak ada data untuk diekspor', csvExported: 'CSV diekspor',
     historyClear: 'Hapus semua riwayat pindaian?', historyCleared: 'Riwayat dihapus',
-    imageSaved: 'Gambar tersimpan!',
+    imageSaved: 'Gambar tersimpan',
     cameraError: 'Akses kamera ditolak. Coba unggah gambar.',
     justNow: 'baru saja', mAgo: 'm lalu', hAgo: 'j lalu', dAgo: 'h lalu',
     away: 'jauhnya',
@@ -609,7 +609,7 @@ function showResult(data) {
       const d = loc.distance_m < 1000 ? `${loc.distance_m}m` : `${(loc.distance_m/1000).toFixed(1)}km`;
       const div = document.createElement('div');
       div.className = 'nearby-item';
-      div.innerHTML = `<span>♻️</span><div><div class="ni-name">${loc.name}</div><div class="ni-dist">${d} ${t('away')}</div></div><a href="https://www.openstreetmap.org/?mlat=${loc.lat}&mlon=${loc.lon}#map=17/${loc.lat}/${loc.lon}" target="_blank">Map →</a>`;
+      div.innerHTML = `<div><div class="ni-name">${loc.name}</div><div class="ni-dist">${d} ${t('away')}</div></div><a href="https://www.openstreetmap.org/?mlat=${loc.lat}&mlon=${loc.lon}#map=17/${loc.lat}/${loc.lon}" target="_blank">Map →</a>`;
       nl.appendChild(div);
     });
   } else { ns.style.display = 'none'; }
@@ -650,7 +650,7 @@ $('#btn-share').addEventListener('click', async () => {
   // Header
   sx.font = '600 14px Inter, system-ui, sans-serif';
   sx.fillStyle = '#666';
-  sx.fillText('♻️ WasteSnap', 32, 40);
+  sx.fillText('WasteSnap', 32, 40);
 
   // Item name
   sx.font = '700 32px Inter, system-ui, sans-serif';
@@ -738,7 +738,7 @@ function renderStats() {
   const container = $('#stats-container');
 
   if (!h.length) {
-    container.innerHTML = `<div class="empty-state"><span>♻️</span><p>${t('noScansStats')}</p></div>`;
+    container.innerHTML = `<div class="empty-state"><p>${t('noScansStats')}</p></div>`;
     return;
   }
 
@@ -809,7 +809,7 @@ function renderHistory() {
   const container = $('#history-container');
 
   if (!h.length) {
-    container.innerHTML = `<div class="empty-state"><span>♻️</span><p>${t('noScansHistory')}</p></div>`;
+    container.innerHTML = `<div class="empty-state"><p>${t('noScansHistory')}</p></div>`;
     return;
   }
 
@@ -817,7 +817,6 @@ function renderHistory() {
     const time = new Date(item.timestamp);
     const ago = timeAgo(time);
     return `<div class="history-item">
-      <span class="hi-icon">♻️</span>
       <div class="hi-body">
         <div class="hi-name">${esc(item.item)}</div>
         <div class="hi-meta">${esc(item.material)} · ${ago}</div>

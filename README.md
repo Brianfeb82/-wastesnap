@@ -1,4 +1,4 @@
-# WasteSnap ♻️
+# WasteSnap
 
 **AI-powered waste classification with nearby recycling locations.**
 
