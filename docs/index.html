@@ -28,6 +28,7 @@
   .header-actions { display: flex; gap: 8px; }
   .icon-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text2); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 14px; }
   .icon-btn:hover { background: var(--surface2); color: var(--text); border-color: #444; }
+  .lang-btn { width: auto; padding: 0 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; }
 
   /* Tab nav */
   .tab-nav { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--bg); }
@@ -186,6 +187,7 @@
     <h1>WasteSnap</h1>
   </div>
   <div class="header-actions">
+    <button id="btn-lang" class="icon-btn lang-btn" aria-label="Language">EN</button>
     <button id="btn-key" class="icon-btn" aria-label="API Key">🔑</button>
     <button id="btn-info" class="icon-btn" aria-label="Info">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -292,9 +294,138 @@
 <canvas id="share-canvas" width="600" height="400"></canvas>
 
 <script>
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'qwen/qwen3.8-27b';
-const CLASSIFY_PROMPT = `You are a waste classification expert. Look at this image and respond ONLY with valid JSON, no markdown fences:
+// ─── i18n ───
+const STRINGS = {
+  en: {
+    setup: '♻️ Setup',
+    enterKey: 'Enter your <a href="https://console.groq.com/keys" target="_blank" style="color:var(--green)">Groq API key</a> to enable AI classification. Free tier works.',
+    saveStart: 'Save & Start',
+    aboutTitle: 'About WasteSnap',
+    aboutDesc: 'AI-powered waste classification. Point your camera at any item:',
+    aboutItems: ['Instant category: recyclable, compostable, landfill, hazardous, e-waste', 'Material identification & disposal instructions', 'Nearby drop-off points (with location permission)', 'Scan history & waste footprint stats'],
+    aboutFooter: 'Built for Arbiter Hacks V1 — Rethinking Waste',
+    close: 'Close',
+    tabScan: '♻️ Scan', tabStats: '📊 Stats', tabHistory: '📋 History',
+    analyzing: 'Analyzing...',
+    placeholderText: 'Tap below to start camera or upload a photo',
+    camera: 'Camera', upload: 'Upload', snap: 'Snap',
+    confidence: 'confidence',
+    material: 'Material', howDispose: 'How to Dispose', nearbyPoints: 'Nearby Drop-off Points',
+    scanAgain: '♻️ Scan Again', shareResult: '📤 Share Result',
+    exportCsv: '📤 Export CSV', clearAll: '🗑 Clear All',
+    totalScans: 'Total Scans', diverted: 'Diverted from Landfill',
+    recyclableCompostable: 'Recyclable / Compostable', dayStreak: 'Day Streak',
+    wasteBreakdown: 'Waste Breakdown',
+    noScansStats: 'No scans yet. Start scanning to see your waste footprint!',
+    noScansHistory: 'No scans yet. Your history will appear here.',
+    noData: 'No data to export', csvExported: 'CSV exported!',
+    historyClear: 'Clear all scan history?', historyCleared: 'History cleared',
+    imageSaved: 'Image saved!',
+    cameraError: 'Camera access denied. Try uploading instead.',
+    justNow: 'just now', mAgo: 'm ago', hAgo: 'h ago', dAgo: 'd ago',
+    away: 'away',
+  },
+  id: {
+    setup: '♻️ Pengaturan',
+    enterKey: 'Masukkan <a href="https://console.groq.com/keys" target="_blank" style="color:var(--green)">API key Groq</a> untuk mengaktifkan klasifikasi AI. Tier gratis bisa dipakai.',
+    saveStart: 'Simpan & Mulai',
+    aboutTitle: 'Tentang WasteSnap',
+    aboutDesc: 'Klasifikasi sampah berbasis AI. Arahkan kamera ke benda apapun:',
+    aboutItems: ['Kategori instan: daur ulang, kompos, TPA, berbahaya, limbah elektronik', 'Identifikasi material & instruksi pembuangan', 'Titik pembuangan terdekat (dengan izin lokasi)', 'Riwayat scan & statistik jejak sampah'],
+    aboutFooter: 'Dibuat untuk Arbiter Hacks V1 — Rethinking Waste',
+    close: 'Tutup',
+    tabScan: '♻️ Pindai', tabStats: '📊 Statistik', tabHistory: '📋 Riwayat',
+    analyzing: 'Menganalisis...',
+    placeholderText: 'Ketuk di bawah untuk mulai kamera atau unggah foto',
+    camera: 'Kamera', upload: 'Unggah', snap: 'Ambil',
+    confidence: 'keyakinan',
+    material: 'Material', howDispose: 'Cara Membuang', nearbyPoints: 'Titik Pembuangan Terdekat',
+    scanAgain: '♻️ Pindai Lagi', shareResult: '📤 Bagikan Hasil',
+    exportCsv: '📤 Ekspor CSV', clearAll: '🗑 Hapus Semua',
+    totalScans: 'Total Pindai', diverted: 'Dialihkan dari TPA',
+    recyclableCompostable: 'Daur Ulang / Kompos', dayStreak: 'Hari Berturut',
+    wasteBreakdown: 'Rincian Sampah',
+    noScansStats: 'Belum ada pindaian. Mulai pindai untuk lihat jejak sampahmu!',
+    noScansHistory: 'Belum ada pindaian. Riwayat akan muncul di sini.',
+    noData: 'Tidak ada data untuk diekspor', csvExported: 'CSV diekspor!',
+    historyClear: 'Hapus semua riwayat pindaian?', historyCleared: 'Riwayat dihapus',
+    imageSaved: 'Gambar tersimpan!',
+    cameraError: 'Akses kamera ditolak. Coba unggah gambar.',
+    justNow: 'baru saja', mAgo: 'm lalu', hAgo: 'j lalu', dAgo: 'h lalu',
+    away: 'jauhnya',
+  },
+};
+
+let currentLang = localStorage.getItem('wastesnap_lang') || 'en';
+function t(key) { return STRINGS[currentLang]?.[key] || STRINGS.en[key] || key; }
+
+function applyLang() {
+  const L = currentLang;
+  $('#btn-lang').textContent = L.toUpperCase();
+  // Key modal
+  document.querySelector('#key-modal h2').innerHTML = t('setup');
+  document.querySelector('#key-modal p').innerHTML = t('enterKey');
+  $('#btn-save-key').textContent = t('saveStart');
+  // Info modal
+  document.querySelector('#info-modal h2').textContent = t('aboutTitle');
+  document.querySelector('#info-modal .modal > p:first-of-type').textContent = t('aboutDesc');
+  const lis = document.querySelectorAll('#info-modal li');
+  t('aboutItems').forEach((txt, i) => { if (lis[i]) lis[i].textContent = txt; });
+  document.querySelector('#info-modal .modal-footer').textContent = t('aboutFooter');
+  $('#btn-close-info').textContent = t('close');
+  // Tabs
+  const tabs = $$('.tab-btn');
+  tabs[0].textContent = t('tabScan');
+  tabs[1].textContent = t('tabStats');
+  tabs[2].textContent = t('tabHistory');
+  // Scan tab
+  $('.scan-label').textContent = t('analyzing');
+  $('.placeholder p').textContent = t('placeholderText');
+  // Buttons - only set text nodes, keep SVGs
+  setButtonText('#btn-camera', t('camera'));
+  setButtonText('#btn-upload', t('upload'));
+  setButtonText('#btn-snap', t('snap'));
+  // Result labels
+  $$('.result-field label').forEach(lbl => {
+    if (lbl.textContent === 'Material' || lbl.textContent === 'Material') lbl.textContent = t('material');
+    else if (lbl.textContent.includes('Dispose') || lbl.textContent.includes('Membuang')) lbl.textContent = t('howDispose');
+    else if (lbl.textContent.includes('Nearby') || lbl.textContent.includes('Terdekat')) lbl.textContent = t('nearbyPoints');
+  });
+  $('.result-conf-label').textContent = t('confidence');
+  $('#btn-again').textContent = t('scanAgain');
+  $('#btn-share').textContent = t('shareResult');
+  // History
+  $('#btn-export').textContent = t('exportCsv');
+  $('#btn-clear-history').textContent = t('clearAll');
+
+  const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
+  if (activeTab === 'stats') renderStats();
+  if (activeTab === 'history') renderHistory();
+}
+
+function setButtonText(sel, text) {
+  const btn = $(sel);
+  if (!btn) return;
+  // Preserve SVG, replace text
+  const svg = btn.querySelector('svg');
+  btn.textContent = '';
+  if (svg) btn.appendChild(svg);
+  btn.append(' ' + text);
+}
+
+function getClassifyPrompt() {
+  if (currentLang === 'id') {
+    return `Kamu adalah ahli klasifikasi sampah. Lihat gambar ini dan jawab HANYA dengan JSON valid, tanpa markdown fences:
+{
+  "item": "<nama benda>",
+  "category": "<salah satu: recyclable, compostable, landfill, hazardous, e-waste>",
+  "material": "<material utama, contoh: plastik PET, kaca, organik>",
+  "instructions": "<satu kalimat dalam Bahasa Indonesia: cara membuang benda ini dengan benar>",
+  "confidence": <0.0 sampai 1.0>
+}
+Jika gambar tidak jelas atau bukan sampah, set category ke "unknown" dan confidence ke 0.0. Tulis item dan instructions dalam Bahasa Indonesia.`;
+  }
+  return `You are a waste classification expert. Look at this image and respond ONLY with valid JSON, no markdown fences:
 {
   "item": "<what the item is>",
   "category": "<one of: recyclable, compostable, landfill, hazardous, e-waste>",
@@ -303,6 +434,10 @@ const CLASSIFY_PROMPT = `You are a waste classification expert. Look at this ima
   "confidence": <0.0 to 1.0>
 }
 If the image is unclear or not a waste item, set category to "unknown" and confidence to 0.0.`;
+}
+
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL = 'qwen/qwen3.8-27b';
 
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
@@ -343,6 +478,14 @@ $('#btn-save-key').addEventListener('click', () => {
 });
 $('#btn-key').addEventListener('click', () => { $('#key-input').value = getKey(); $('#key-modal').classList.add('show'); });
 
+// ─── LANGUAGE TOGGLE ───
+$('#btn-lang').addEventListener('click', () => {
+  currentLang = currentLang === 'en' ? 'id' : 'en';
+  localStorage.setItem('wastesnap_lang', currentLang);
+  applyLang();
+});
+applyLang();
+
 // ─── LOCATION ───
 navigator.geolocation?.getCurrentPosition(
   p => { userLat = p.coords.latitude; userLon = p.coords.longitude; }, () => {},
@@ -359,7 +502,7 @@ $('#btn-camera').addEventListener('click', async () => {
     $('#placeholder').style.display = 'none';
     $('#btn-snap').classList.add('show');
     $('#btn-camera').style.display = 'none';
-  } catch { showError('Camera access denied. Try uploading instead.'); }
+  } catch { showError(t('cameraError')); }
 });
 
 $('#btn-upload').addEventListener('click', () => $('#file-input').click());
@@ -393,7 +536,7 @@ async function classifyFile(imageBlob) {
       body: JSON.stringify({
         model: GROQ_MODEL,
         messages: [{ role: 'user', content: [
-          { type: 'text', text: CLASSIFY_PROMPT },
+          { type: 'text', text: getClassifyPrompt() },
           { type: 'image_url', image_url: { url: `data:${mime};base64,${b64}` } },
         ]}],
         temperature: 0.1, max_tokens: 300,
@@ -466,7 +609,7 @@ function showResult(data) {
       const d = loc.distance_m < 1000 ? `${loc.distance_m}m` : `${(loc.distance_m/1000).toFixed(1)}km`;
       const div = document.createElement('div');
       div.className = 'nearby-item';
-      div.innerHTML = `<span>♻️</span><div><div class="ni-name">${loc.name}</div><div class="ni-dist">${d} away</div></div><a href="https://www.openstreetmap.org/?mlat=${loc.lat}&mlon=${loc.lon}#map=17/${loc.lat}/${loc.lon}" target="_blank">Map →</a>`;
+      div.innerHTML = `<span>♻️</span><div><div class="ni-name">${loc.name}</div><div class="ni-dist">${d} ${t('away')}</div></div><a href="https://www.openstreetmap.org/?mlat=${loc.lat}&mlon=${loc.lon}#map=17/${loc.lat}/${loc.lon}" target="_blank">Map →</a>`;
       nl.appendChild(div);
     });
   } else { ns.style.display = 'none'; }
@@ -584,7 +727,7 @@ $('#btn-share').addEventListener('click', async () => {
       const a = document.createElement('a');
       a.href = url; a.download = 'wastesnap-result.png';
       a.click(); URL.revokeObjectURL(url);
-      toast('Image saved!');
+      toast(t('imageSaved'));
     }
   }, 'image/png');
 });
@@ -595,7 +738,7 @@ function renderStats() {
   const container = $('#stats-container');
 
   if (!h.length) {
-    container.innerHTML = `<div class="empty-state"><span>♻️</span><p>No scans yet. Start scanning to see your waste footprint!</p></div>`;
+    container.innerHTML = `<div class="empty-state"><span>♻️</span><p>${t('noScansStats')}</p></div>`;
     return;
   }
 
@@ -635,23 +778,23 @@ function renderStats() {
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-val">${total}</div>
-        <div class="stat-label">Total Scans</div>
+        <div class="stat-label">${t('totalScans')}</div>
       </div>
       <div class="stat-card">
         <div class="stat-val" style="color:var(--green)">${pct}%</div>
-        <div class="stat-label">Diverted from Landfill</div>
+        <div class="stat-label">${t('diverted')}</div>
       </div>
       <div class="stat-card">
         <div class="stat-val">${recycled}</div>
-        <div class="stat-label">Recyclable / Compostable</div>
+        <div class="stat-label">${t('recyclableCompostable')}</div>
       </div>
       <div class="stat-card">
         <div class="stat-val">${streak}</div>
-        <div class="stat-label">Day Streak</div>
+        <div class="stat-label">${t('dayStreak')}</div>
       </div>
     </div>
     <div class="stat-card wide" style="width:100%;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);padding:20px;">
-      <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Waste Breakdown</div>
+      <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">${t('wasteBreakdown')}</div>
       <div class="donut-wrap">
         <svg viewBox="0 0 100 100" width="120" height="120" style="transform:rotate(-90deg)">${donutPaths}</svg>
         <div class="donut-legend">${legendItems}</div>
@@ -666,7 +809,7 @@ function renderHistory() {
   const container = $('#history-container');
 
   if (!h.length) {
-    container.innerHTML = `<div class="empty-state"><span>♻️</span><p>No scans yet. Your history will appear here.</p></div>`;
+    container.innerHTML = `<div class="empty-state"><span>♻️</span><p>${t('noScansHistory')}</p></div>`;
     return;
   }
 
@@ -686,10 +829,10 @@ function renderHistory() {
 
 function timeAgo(date) {
   const s = Math.floor((Date.now() - date) / 1000);
-  if (s < 60) return 'just now';
-  if (s < 3600) return Math.floor(s / 60) + 'm ago';
-  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
-  return Math.floor(s / 86400) + 'd ago';
+  if (s < 60) return t('justNow');
+  if (s < 3600) return Math.floor(s / 60) + t('mAgo');
+  if (s < 86400) return Math.floor(s / 3600) + t('hAgo');
+  return Math.floor(s / 86400) + t('dAgo');
 }
 
 function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
@@ -697,7 +840,7 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s; re
 // ─── EXPORT CSV ───
 $('#btn-export').addEventListener('click', () => {
   const h = getHistory();
-  if (!h.length) { toast('No data to export'); return; }
+  if (!h.length) { toast(t('noData')); return; }
   const rows = [['Item', 'Category', 'Material', 'Instructions', 'Confidence', 'Date'].join(',')];
   h.forEach(i => {
     rows.push([
@@ -710,14 +853,14 @@ $('#btn-export').addEventListener('click', () => {
   const a = document.createElement('a');
   a.href = url; a.download = 'wastesnap-history.csv';
   a.click(); URL.revokeObjectURL(url);
-  toast('CSV exported!');
+  toast(t('csvExported'));
 });
 
 $('#btn-clear-history').addEventListener('click', () => {
-  if (confirm('Clear all scan history?')) {
+  if (confirm(t('historyClear'))) {
     saveHistory([]);
     renderHistory();
-    toast('History cleared');
+    toast(t('historyCleared'));
   }
 });
 
