@@ -29,8 +29,13 @@
   .icon-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text2); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 14px; }
   .icon-btn:hover { background: var(--surface2); color: var(--text); border-color: #444; }
 
-  /* Main */
-  main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 16px; max-width: 480px; margin: 0 auto; width: 100%; }
+  /* Tab nav */
+  .tab-nav { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--bg); }
+  .tab-btn { flex: 1; padding: 12px; font-size: 13px; font-weight: 600; color: var(--text2); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.2s; }
+  .tab-btn.active { color: var(--green); border-bottom-color: var(--green); }
+  .tab-btn:hover { color: var(--text); }
+  .tab-content { display: none; flex: 1; flex-direction: column; align-items: center; padding: 20px; gap: 16px; max-width: 480px; margin: 0 auto; width: 100%; overflow-y: auto; }
+  .tab-content.active { display: flex; }
 
   /* Camera */
   .camera-wrap { position: relative; width: 100%; aspect-ratio: 3/4; border-radius: var(--radius); overflow: hidden; background: #000; border: 1px solid var(--border); }
@@ -77,8 +82,10 @@
   .nearby-item .ni-dist { font-size: 11px; color: var(--text2); }
   .nearby-item a { font-size: 11px; color: var(--green); text-decoration: none; margin-left: auto; flex-shrink: 0; }
   .nearby-item a:hover { text-decoration: underline; }
-  .btn-again { width: 100%; padding: 14px; background: var(--surface2); border: none; border-top: 1px solid var(--border); color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-  .btn-again:hover { background: #252525; }
+  .result-actions { display: flex; border-top: 1px solid var(--border); }
+  .result-actions button { flex: 1; padding: 14px; background: var(--surface2); border: none; color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+  .result-actions button:hover { background: #252525; }
+  .result-actions button:first-child { border-right: 1px solid var(--border); }
 
   /* Category colors */
   .cat-recyclable .result-head { background: rgba(34,197,94,0.08); }
@@ -95,13 +102,53 @@
   /* Modal */
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 50; display: none; align-items: center; justify-content: center; padding: 20px; }
   .modal-bg.show { display: flex; }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; max-width: 400px; width: 100%; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; max-width: 400px; width: 100%; max-height: 90vh; overflow-y: auto; }
   .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
   .modal p, .modal li { font-size: 13px; color: var(--text2); line-height: 1.6; }
   .modal ul { list-style: disc; padding-left: 20px; margin: 8px 0; }
   .modal input { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--bg); border: 1px solid var(--border); color: var(--text); font-size: 14px; margin: 12px 0; outline: none; }
   .modal input:focus { border-color: var(--green); }
   .modal .modal-footer { font-size: 11px; color: #555; margin-top: 12px; }
+
+  /* Stats dashboard */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; text-align: center; }
+  .stat-val { font-size: 28px; font-weight: 700; }
+  .stat-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+  .stat-card.wide { grid-column: 1 / -1; }
+  .donut-wrap { display: flex; align-items: center; justify-content: center; gap: 24px; padding: 8px 0; }
+  .donut-legend { display: flex; flex-direction: column; gap: 6px; }
+  .legend-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .streak-text { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+  /* History */
+  .history-list { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+  .history-item { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; }
+  .hi-icon { font-size: 20px; flex-shrink: 0; }
+  .hi-body { flex: 1; min-width: 0; }
+  .hi-name { font-size: 14px; font-weight: 600; }
+  .hi-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .hi-cat { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+  .hi-cat-recyclable { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .hi-cat-compostable { background: rgba(163,230,53,0.15); color: #a3e635; }
+  .hi-cat-landfill { background: rgba(107,114,128,0.15); color: #9ca3af; }
+  .hi-cat-hazardous { background: rgba(239,68,68,0.15); color: #f87171; }
+  .hi-cat-e-waste { background: rgba(245,158,11,0.15); color: #fbbf24; }
+  .hi-cat-unknown { background: rgba(139,92,246,0.15); color: #a78bfa; }
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text2); }
+  .empty-state span { font-size: 48px; display: block; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+  .history-actions { display: flex; gap: 8px; width: 100%; }
+  .history-actions button { font-size: 12px; padding: 8px 12px; }
+
+  /* Share canvas (hidden) */
+  #share-canvas { display: none; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 20px; font-size: 13px; font-weight: 500; z-index: 60; animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards; pointer-events: none; }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+  @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
 </style>
 </head>
 <body>
@@ -125,6 +172,7 @@
       <li>Instant category: recyclable, compostable, landfill, hazardous, e-waste</li>
       <li>Material identification & disposal instructions</li>
       <li>Nearby drop-off points (with location permission)</li>
+      <li>Scan history & waste footprint stats</li>
     </ul>
     <p class="modal-footer">Built for Arbiter Hacks V1 — Rethinking Waste</p>
     <button id="btn-close-info" class="btn btn-secondary" style="width:100%;margin-top:16px">Close</button>
@@ -145,8 +193,15 @@
   </div>
 </header>
 
-<main>
-  <!-- Camera -->
+<!-- Tab Navigation -->
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="scan">♻️ Scan</button>
+  <button class="tab-btn" data-tab="stats">📊 Stats</button>
+  <button class="tab-btn" data-tab="history">📋 History</button>
+</nav>
+
+<!-- TAB: Scan -->
+<div class="tab-content active" data-tab="scan">
   <div class="camera-wrap">
     <video id="camera" autoplay playsinline muted></video>
     <canvas id="canvas" style="display:none"></canvas>
@@ -162,7 +217,6 @@
     </div>
   </div>
 
-  <!-- Actions -->
   <div class="actions">
     <button id="btn-camera" class="btn btn-primary">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -179,7 +233,6 @@
   </div>
   <input type="file" id="file-input" accept="image/*" style="display:none">
 
-  <!-- Result -->
   <div id="result-card" class="result">
     <div id="result-head" class="result-head">
       <span class="result-icon">♻️</span>
@@ -206,14 +259,37 @@
         <div id="nearby-list" class="result-nearby"></div>
       </div>
     </div>
-    <button id="btn-again" class="btn-again">Scan Another Item</button>
+    <div class="result-actions">
+      <button id="btn-again">♻️ Scan Again</button>
+      <button id="btn-share">📤 Share Result</button>
+    </div>
   </div>
 
-  <!-- Error -->
   <div id="error-card" class="error">
     <p id="error-msg"></p>
   </div>
-</main>
+</div>
+
+<!-- TAB: Stats -->
+<div class="tab-content" data-tab="stats">
+  <div id="stats-container" style="width:100%;display:flex;flex-direction:column;gap:16px;align-items:center;">
+    <!-- Filled by JS -->
+  </div>
+</div>
+
+<!-- TAB: History -->
+<div class="tab-content" data-tab="history">
+  <div class="history-actions">
+    <button id="btn-export" class="btn btn-secondary" style="font-size:12px;padding:8px 14px;">📤 Export CSV</button>
+    <button id="btn-clear-history" class="btn btn-secondary" style="font-size:12px;padding:8px 14px;margin-left:auto;">🗑 Clear All</button>
+  </div>
+  <div id="history-container" class="history-list">
+    <!-- Filled by JS -->
+  </div>
+</div>
+
+<!-- Hidden share canvas -->
+<canvas id="share-canvas" width="600" height="400"></canvas>
 
 <script>
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -229,14 +305,37 @@ const CLASSIFY_PROMPT = `You are a waste classification expert. Look at this ima
 If the image is unclear or not a waste item, set category to "unknown" and confidence to 0.0.`;
 
 const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
 const video = $('#camera');
 const canvas = $('#canvas');
 const ctx = canvas.getContext('2d');
-let stream = null, userLat = null, userLon = null;
+let stream = null, userLat = null, userLon = null, lastClassification = null;
 
+// ─── STORAGE ───
 function getKey() { return localStorage.getItem('wastesnap_groq_key') || ''; }
 function setKey(k) { localStorage.setItem('wastesnap_groq_key', k); }
+function getHistory() { try { return JSON.parse(localStorage.getItem('wastesnap_history') || '[]'); } catch { return []; } }
+function saveHistory(h) { localStorage.setItem('wastesnap_history', JSON.stringify(h)); }
+function addToHistory(c) {
+  const h = getHistory();
+  h.unshift({ ...c, timestamp: Date.now() });
+  if (h.length > 200) h.length = 200; // ponytail: cap at 200, paginate when needed
+  saveHistory(h);
+}
 
+// ─── TABS ───
+$$('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('.tab-btn').forEach(b => b.classList.remove('active'));
+    $$('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelector(`.tab-content[data-tab="${btn.dataset.tab}"]`).classList.add('active');
+    if (btn.dataset.tab === 'stats') renderStats();
+    if (btn.dataset.tab === 'history') renderHistory();
+  });
+});
+
+// ─── KEY MODAL ───
 if (!getKey()) $('#key-modal').classList.add('show');
 $('#btn-save-key').addEventListener('click', () => {
   const k = $('#key-input').value.trim();
@@ -244,11 +343,13 @@ $('#btn-save-key').addEventListener('click', () => {
 });
 $('#btn-key').addEventListener('click', () => { $('#key-input').value = getKey(); $('#key-modal').classList.add('show'); });
 
+// ─── LOCATION ───
 navigator.geolocation?.getCurrentPosition(
   p => { userLat = p.coords.latitude; userLon = p.coords.longitude; }, () => {},
   { enableHighAccuracy: false, timeout: 5000 }
 );
 
+// ─── CAMERA ───
 $('#btn-camera').addEventListener('click', async () => {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
@@ -271,6 +372,7 @@ $('#btn-snap').addEventListener('click', () => {
   canvas.toBlob(blob => classifyFile(blob), 'image/jpeg', 0.85);
 });
 
+// ─── CLASSIFY ───
 async function fileToBase64(file) {
   return new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result.split(',')[1]); rd.readAsDataURL(file); });
 }
@@ -303,6 +405,11 @@ async function classifyFile(imageBlob) {
     raw = raw.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
     if (raw.startsWith('```')) raw = raw.split('\n').slice(1).join('\n').replace(/```\s*$/, '');
     const classification = JSON.parse(raw);
+    lastClassification = classification;
+
+    // Save to history
+    addToHistory(classification);
+
     let nearby = null;
     if (userLat !== null) nearby = await findNearby(userLat, userLon, classification.category);
     showResult({ classification, nearby });
@@ -310,6 +417,7 @@ async function classifyFile(imageBlob) {
   finally { $('#scan-overlay').classList.remove('active'); }
 }
 
+// ─── NEARBY ───
 async function findNearby(lat, lon, cat) {
   const f = {
     recyclable: `node["amenity"="recycling"](around:5000,${lat},${lon});`,
@@ -339,6 +447,7 @@ function haversine(lat1, lon1, lat2, lon2) {
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
 }
 
+// ─── SHOW RESULT ───
 function showResult(data) {
   const c = data.classification;
   const card = $('#result-card');
@@ -364,8 +473,255 @@ function showResult(data) {
 }
 
 function showError(msg) { $('#error-msg').textContent = msg; $('#error-card').classList.add('show'); }
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
 
 $('#btn-again').addEventListener('click', () => { $('#result-card').classList.remove('show'); $('#file-input').value = ''; });
+
+// ─── SHARE ───
+const CAT_COLORS = {
+  recyclable: '#22c55e', compostable: '#a3e635', landfill: '#6b7280',
+  hazardous: '#ef4444', 'e-waste': '#f59e0b', unknown: '#8b5cf6',
+};
+
+$('#btn-share').addEventListener('click', async () => {
+  if (!lastClassification) return;
+  const c = lastClassification;
+  const sc = $('#share-canvas');
+  const sx = sc.getContext('2d');
+  const W = 600, H = 400;
+  const color = CAT_COLORS[c.category] || '#8b5cf6';
+
+  // Background
+  sx.fillStyle = '#0a0a0a';
+  sx.fillRect(0, 0, W, H);
+
+  // Accent bar
+  sx.fillStyle = color;
+  sx.fillRect(0, 0, 6, H);
+
+  // Header
+  sx.font = '600 14px Inter, system-ui, sans-serif';
+  sx.fillStyle = '#666';
+  sx.fillText('♻️ WasteSnap', 32, 40);
+
+  // Item name
+  sx.font = '700 32px Inter, system-ui, sans-serif';
+  sx.fillStyle = '#e5e5e5';
+  sx.fillText(c.item, 32, 90);
+
+  // Category pill
+  sx.fillStyle = color + '22';
+  const catText = c.category.toUpperCase();
+  sx.font = '700 13px Inter, system-ui, sans-serif';
+  const catW = sx.measureText(catText).width + 20;
+  sx.beginPath();
+  sx.roundRect(32, 105, catW, 26, 6);
+  sx.fill();
+  sx.fillStyle = color;
+  sx.fillText(catText, 42, 123);
+
+  // Confidence
+  sx.font = '700 48px Inter, system-ui, sans-serif';
+  sx.fillStyle = color;
+  sx.fillText(Math.round(c.confidence * 100) + '%', W - 140, 90);
+  sx.font = '500 11px Inter, system-ui, sans-serif';
+  sx.fillStyle = '#666';
+  sx.fillText('CONFIDENCE', W - 140, 108);
+
+  // Divider
+  sx.strokeStyle = '#2a2a2a';
+  sx.beginPath(); sx.moveTo(32, 150); sx.lineTo(W - 32, 150); sx.stroke();
+
+  // Material
+  sx.font = '600 11px Inter, system-ui, sans-serif';
+  sx.fillStyle = '#666';
+  sx.fillText('MATERIAL', 32, 180);
+  sx.font = '500 15px Inter, system-ui, sans-serif';
+  sx.fillStyle = '#e5e5e5';
+  sx.fillText(c.material, 32, 200);
+
+  // Instructions
+  sx.font = '600 11px Inter, system-ui, sans-serif';
+  sx.fillStyle = '#666';
+  sx.fillText('HOW TO DISPOSE', 32, 240);
+  sx.font = '500 14px Inter, system-ui, sans-serif';
+  sx.fillStyle = '#ccc';
+  // Word wrap
+  const words = c.instructions.split(' ');
+  let line = '', y = 260;
+  for (const word of words) {
+    const test = line + word + ' ';
+    if (sx.measureText(test).width > W - 64 && line) {
+      sx.fillText(line, 32, y); y += 22; line = word + ' ';
+    } else { line = test; }
+  }
+  sx.fillText(line, 32, y);
+
+  // Footer
+  sx.font = '500 12px Inter, system-ui, sans-serif';
+  sx.fillStyle = '#444';
+  sx.fillText('wastesnap-ten.vercel.app', 32, H - 20);
+
+  // Share or download
+  sc.toBlob(async blob => {
+    const file = new File([blob], 'wastesnap-result.png', { type: 'image/png' });
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({
+          title: `WasteSnap: ${c.item} is ${c.category}`,
+          text: `I scanned "${c.item}" with WasteSnap — it's ${c.category}! ${c.instructions}`,
+          files: [file],
+        });
+      } catch {}
+    } else {
+      // Fallback: download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'wastesnap-result.png';
+      a.click(); URL.revokeObjectURL(url);
+      toast('Image saved!');
+    }
+  }, 'image/png');
+});
+
+// ─── STATS ───
+function renderStats() {
+  const h = getHistory();
+  const container = $('#stats-container');
+
+  if (!h.length) {
+    container.innerHTML = `<div class="empty-state"><span>♻️</span><p>No scans yet. Start scanning to see your waste footprint!</p></div>`;
+    return;
+  }
+
+  const counts = {};
+  h.forEach(item => { counts[item.category] = (counts[item.category] || 0) + 1; });
+  const total = h.length;
+  const recycled = (counts.recyclable || 0) + (counts.compostable || 0);
+  const pct = total ? Math.round(recycled / total * 100) : 0;
+
+  // Streak: consecutive days with at least one scan
+  const days = new Set(h.map(i => new Date(i.timestamp).toDateString()));
+  let streak = 0;
+  const d = new Date();
+  while (days.has(d.toDateString())) { streak++; d.setDate(d.getDate() - 1); }
+
+  // Donut chart SVG
+  const cats = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  let donutPaths = '';
+  let offset = 0;
+  const catColorMap = {
+    recyclable: '#22c55e', compostable: '#a3e635', landfill: '#6b7280',
+    hazardous: '#ef4444', 'e-waste': '#f59e0b', unknown: '#8b5cf6',
+  };
+  for (const [cat, count] of cats) {
+    const pctSlice = count / total * 100;
+    const dashLen = pctSlice * 2.512; // circumference of r=40 ≈ 251.2, /100
+    const dashGap = 251.2 - dashLen;
+    donutPaths += `<circle cx="50" cy="50" r="40" fill="none" stroke="${catColorMap[cat] || '#555'}" stroke-width="12" stroke-dasharray="${dashLen} ${dashGap}" stroke-dashoffset="${-offset * 2.512}" />`;
+    offset += pctSlice;
+  }
+
+  const legendItems = cats.map(([cat, count]) =>
+    `<div class="legend-row"><div class="legend-dot" style="background:${catColorMap[cat] || '#555'}"></div><span>${cat} <strong>${count}</strong></span></div>`
+  ).join('');
+
+  container.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val">${total}</div>
+        <div class="stat-label">Total Scans</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color:var(--green)">${pct}%</div>
+        <div class="stat-label">Diverted from Landfill</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${recycled}</div>
+        <div class="stat-label">Recyclable / Compostable</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${streak}</div>
+        <div class="stat-label">Day Streak</div>
+      </div>
+    </div>
+    <div class="stat-card wide" style="width:100%;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);padding:20px;">
+      <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Waste Breakdown</div>
+      <div class="donut-wrap">
+        <svg viewBox="0 0 100 100" width="120" height="120" style="transform:rotate(-90deg)">${donutPaths}</svg>
+        <div class="donut-legend">${legendItems}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── HISTORY ───
+function renderHistory() {
+  const h = getHistory();
+  const container = $('#history-container');
+
+  if (!h.length) {
+    container.innerHTML = `<div class="empty-state"><span>♻️</span><p>No scans yet. Your history will appear here.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = h.map(item => {
+    const time = new Date(item.timestamp);
+    const ago = timeAgo(time);
+    return `<div class="history-item">
+      <span class="hi-icon">♻️</span>
+      <div class="hi-body">
+        <div class="hi-name">${esc(item.item)}</div>
+        <div class="hi-meta">${esc(item.material)} · ${ago}</div>
+      </div>
+      <span class="hi-cat hi-cat-${item.category}">${item.category}</span>
+    </div>`;
+  }).join('');
+}
+
+function timeAgo(date) {
+  const s = Math.floor((Date.now() - date) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  return Math.floor(s / 86400) + 'd ago';
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ─── EXPORT CSV ───
+$('#btn-export').addEventListener('click', () => {
+  const h = getHistory();
+  if (!h.length) { toast('No data to export'); return; }
+  const rows = [['Item', 'Category', 'Material', 'Instructions', 'Confidence', 'Date'].join(',')];
+  h.forEach(i => {
+    rows.push([
+      `"${i.item}"`, i.category, `"${i.material}"`, `"${i.instructions}"`,
+      i.confidence, new Date(i.timestamp).toISOString()
+    ].join(','));
+  });
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'wastesnap-history.csv';
+  a.click(); URL.revokeObjectURL(url);
+  toast('CSV exported!');
+});
+
+$('#btn-clear-history').addEventListener('click', () => {
+  if (confirm('Clear all scan history?')) {
+    saveHistory([]);
+    renderHistory();
+    toast('History cleared');
+  }
+});
+
+// ─── MODALS ───
 $('#btn-info').addEventListener('click', () => $('#info-modal').classList.add('show'));
 $('#btn-close-info').addEventListener('click', () => $('#info-modal').classList.remove('show'));
 $('#info-modal').addEventListener('click', e => { if (e.target === e.currentTarget) $('#info-modal').classList.remove('show'); });
